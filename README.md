@@ -27,6 +27,31 @@ host=localhost port=5432 dbname=mydb connect_timeout=10
 | dbname   | Database Name                        | [user]         |
 | passfile | Name of file passwords are stored in | ~/.pgpass      |
 
+
+The tables in the file can be read as if they were normal DuckDB tables, but the underlying data is read directly from Postgres at query time.
+
+```sql
+D SHOW ALL TABLES;
+┌───────────────────────────────────────┐
+│                 name                  │
+│                varchar                │
+├───────────────────────────────────────┤
+│ uuids                                 │
+└───────────────────────────────────────┘
+D SELECT * FROM postgres_db.uuids;
+┌──────────────────────────────────────┐
+│                  u                   │
+│                 uuid                 │
+├──────────────────────────────────────┤
+│ 6d3d2541-710b-4bde-b3af-4711738636bf │
+│ NULL                                 │
+│ 00000000-0000-0000-0000-000000000001 │
+│ ffffffff-ffff-ffff-ffff-ffffffffffff │
+└──────────────────────────────────────┘
+```
+
+For more information on how to use the connector, refer to the [Postgres documentation on the website](https://duckdb.org/docs/extensions/postgres).
+
 ### AWS RDS IAM Authentication
 
 The extension supports AWS RDS IAM-based authentication, which allows you to connect to RDS PostgreSQL instances using IAM database authentication instead of static passwords. This feature automatically generates temporary authentication tokens using the AWS CLI.
@@ -74,46 +99,6 @@ ATTACH '' AS rds_db (TYPE POSTGRES, SECRET rds_secret);
 - **Environment Variables**: The AWS CLI command inherits environment variables from the parent process, so `AWS_PROFILE`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`, and `AWS_REGION` will be available to the AWS CLI.
 
 
-#### Example with AWS Profile
-
-```sql
-
-CREATE SECRET rds_secret (
-    TYPE POSTGRES,
-    HOST 'my-db.xxxxxx.us-east-1.rds.amazonaws.com',
-    PORT '5432',
-    USER 'my_iam_user',
-    DATABASE 'mydb',
-    USE_RDS_IAM_AUTH true
-);
-
-ATTACH '' AS rds_db (TYPE POSTGRES, SECRET rds_secret);
-```
-
-The tables in the file can be read as if they were normal DuckDB tables, but the underlying data is read directly from Postgres at query time.
-
-```sql
-D SHOW ALL TABLES;
-┌───────────────────────────────────────┐
-│                 name                  │
-│                varchar                │
-├───────────────────────────────────────┤
-│ uuids                                 │
-└───────────────────────────────────────┘
-D SELECT * FROM postgres_db.uuids;
-┌──────────────────────────────────────┐
-│                  u                   │
-│                 uuid                 │
-├──────────────────────────────────────┤
-│ 6d3d2541-710b-4bde-b3af-4711738636bf │
-│ NULL                                 │
-│ 00000000-0000-0000-0000-000000000001 │
-│ ffffffff-ffff-ffff-ffff-ffffffffffff │
-└──────────────────────────────────────┘
-```
-
-For more information on how to use the connector, refer to the [Postgres documentation on the website](https://duckdb.org/docs/extensions/postgres).
-
 ## Building & Loading the Extension
 
 The DuckDB submodule must be initialized prior to building.
@@ -124,18 +109,16 @@ git pull --recurse-submodules
 ```
 
 To build, type 
-```bash
+```
 make
 ```
 
 To run, run the bundled `duckdb` shell:
-
-```bash
-./build/release/duckdb -unsigned  # allow unsigned extensions
+```
+ ./build/release/duckdb -unsigned  # allow unsigned extensions
 ```
 
 Then, load the Postgres extension like so:
-
-```sql
+```SQL
 LOAD 'build/release/extension/postgres_scanner/postgres_scanner.duckdb_extension';
 ```
