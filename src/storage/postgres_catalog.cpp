@@ -155,7 +155,6 @@ string PostgresCatalog::GetConnectionString(ClientContext &context, const string
 		const auto &kv_secret = dynamic_cast<const KeyValueSecret &>(*secret_entry->secret);
 		string new_connection_info;
 
-		// Check if RDS IAM authentication is enabled
 		Value use_rds_iam_auth_val = kv_secret.TryGetValue("use_rds_iam_auth");
 		bool use_rds_iam_auth = false;
 		if (!use_rds_iam_auth_val.IsNull()) {
